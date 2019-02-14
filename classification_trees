@@ -1,0 +1,173 @@
+#data has already been provided in training and validation datasets
+train.df<-read.csv("train.csv")
+valid.df<-read.csv("test.csv")
+row.names(train.df)<-train.df[,1]
+row.names(valid.df)<-valid.df[,1]
+#View(train.df)
+train.df<-train.df[,-1]
+valid.df<-valid.df[,-1]
+#there are two people whose embarkation port is unknown
+train.df[train.df$Embarked=="",]
+#these 2 people will be taken out of the dataset
+rownames(train.df[train.df$Embarked=="",])
+#these 2 people will be taken out of the dataset for graph purposes
+trainport.df<-train.df[c(-62,-830),]
+#the entries of the people whose age is unknow are
+unk.age<-as.integer(rownames(train.df[is.na(train.df$Age),]))
+trainage.df<-train.df[-unk.age,] #trainage is train without empty entries
+#Some variables don´t provide information
+selected.var<-c(1, 2, 4, 5, 6, 7, 9, 11)
+trainage.df<-trainage.df[,selected.var]
+#The dummy variables are created
+trainage.df$Male<-ifelse(trainage.df$Sex=="male",1,0)
+trainage.df$Female<-ifelse(trainage.df$Sex=="female",1,0)
+trainage.df$Sex<-NULL
+trainage.df$Q<-ifelse(trainage.df$Embarked=="Q",1,0)
+trainage.df$S<-ifelse(trainage.df$Embarked=="S",1,0)
+trainage.df$C<-ifelse(trainage.df$Embarked=="C",1,0)
+trainage.df$Embarked<-NULL
+#Correlations heatmap
+library(gplots)
+heatmap.2(cor(trainage.df), Rowv=FALSE, Colv = FALSE, dendrogram = "none",
+cellnote = round(cor(trainage.df),2),
+notecol = "black", key = FALSE, trace = 'none', margins = c(10,10))
+save.image("C:\\Users\\devil_000\\Desktop\\R Dataset\\DMBA-R-datasets\\DMBA-R-datasets\\Datasets\\Correlations_Workspace")
+#classification trees: default
+heatmap.2(cor(trainage.df), Rowv=FALSE, Colv = FALSE, dendrogram = "none",
+cellnote = round(cor(trainage.df),2),
+notecol = "black", key = FALSE, trace = 'none', margins = c(10,10))
+#classification trees: default
+default.ct <- rpart(Survived ~ ., data = trainage.df, method = "class")
+library(rpart)
+library(rpart.plot)
+default.ct <- rpart(Survived ~ ., data = trainage.df, method = "class")
+#plot classification tree
+library(rpart)
+prp(default.ct, type = 1, extra = 1, under = TRUE, split.font = 1, varlen = -10)
+#deeper classification tree
+deeper.ct <- rpart(Survived ~ ., data = trainage.df, method = "class", cp = 0, minsplit = 1)
+#count number of leaves
+length(deeper.ct$frame$var[deeper.ct$frame$var == "<leaf>"])
+#plot tree
+prp(deeper.ct, type = 1, extra = 1, under = TRUE, split.font = 1, varlen = -10,
+box.col=ifelse(deeper.ct$frame$var == "<leaf>", 'gray', 'white'))
+#accuracy on training and validation
+#training
+default.ct.point.pred.train <- predict(default.ct,trainage.df,type = "class")
+confusionMatrix(default.ct.point.pred.train, trainage.df$Survived)
+library(caret)
+confusionMatrix(default.ct.point.pred.train, trainage.df$Survived)
+head(default.ct.point.pred.train)
+head(trainage.df$Survived)
+levels(trainage.df$Survived)
+levels(default.ct.point.pred.train)
+levels(trainage.df$Survived) <- c("0", "1")
+levels(trainage.df$Survived)
+confusionMatrix(default.ct.point.pred.train, trainage.df$Survived)
+str(trainage.df$Survived)
+str(default.ct.point.pred.train)
+trainage.df.Survived<-as.factor(trainage.df$survived)
+str(trainage.df.Survived)
+confusionMatrix(default.ct.point.pred.train, trainage.df$Survived)
+head(trainage.df.Survived)
+trainage.df.Survived<-as.factor(trainage.df$Survived)
+head(trainage.df.Survived)
+str(trainage.df.Survived)
+confusionMatrix(default.ct.point.pred.train, trainage.df$Survived)
+confusionMatrix(default.ct.point.pred.train, trainage.df.Survived$Survived)
+confusionMatrix(default.ct.point.pred.train, trainage.df.Survived)
+deeper.ct.point.pred.train <- predict(deeper.ct,trainage.df,type = "class")
+confusionMatrix(deeper.ct.point.pred.train, trainage.df.Survived)
+#let´s prepare the validation data set
+selected.var<-c(1, 2, 4, 5, 6, 7, 9, 11)
+valid.df<-valid.df[,selected.var]
+head(valid.df)
+selected.var<-c(1, 3, 5, 6, 8, 10)
+valid.df<-valid.df[,selected.var]
+head(valid.df)
+valid.df$Male<-ifelse(valid.df$Sex=="male",1,0)
+valid.df$Female<-ifelse(valid.df$Sex=="female",1,0)
+valid.df$Sex<-NULL
+valid.df$Q<-ifelse(valid.df$Embarked=="Q",1,0)
+valid.df$S<-ifelse(valid.df$Embarked=="S",1,0)
+valid.df$C<-ifelse(valid.df$Embarked=="C",1,0)
+valid.df$Embarked<-NULL
+head(valid.df)
+survived.df<-read.csv("gender_submission.csv")
+#validation accuracy
+survived.df<-as.factor(survived.df)
+str(survived.df)
+survived.df<-read.csv("gender_submission.csv")
+survived.df<-survived.df[,2]
+head(survived.df)
+survived.df<-as.factor(survived.df)
+str(survived.df)
+default.ct.point.pred.valid <- predict(default.ct, valid.df,type = "class")
+#preparing again validation data
+valid.df<-read.csv("test.csv")
+row.names(valid.df)<-valid.df[,1]
+valid.df<-valid.df[,-1]
+selected.var<-c(1, 3, 4, 5, 6, 8, 10)
+valid.df<-valid.df[,selected.var]
+head(valid.df)
+valid.df$Male<-ifelse(valid.df$Sex=="male",1,0)
+valid.df$Female<-ifelse(valid.df$Sex=="female",1,0)
+valid.df$Sex<-NULL
+valid.df$Q<-ifelse(valid.df$Embarked=="Q",1,0)
+valid.df$S<-ifelse(valid.df$Embarked=="S",1,0)
+valid.df$C<-ifelse(valid.df$Embarked=="C",1,0)
+valid.df$Embarked<-NULL
+head(valid.df)
+default.ct.point.pred.valid <- predict(default.ct, valid.df,type = "class")
+confusionMatrix(deeper.ct.point.pred.valid, survived.df)
+confusionMatrix(default.ct.point.pred.valid, survived.df)
+deeper.ct.point.pred.valid <- predict(deeper.ct, valid.df,type = "class")
+confusionMatrix(deeper.ct.point.pred.valid, survived.df)
+deeper.ct <- rpart(Survived ~ ., data = trainage.df, method = "class", cp = 0.00001, minsplit = 5, xval=5)
+#crossvalidation and prunning
+printcp(deeper.ct)
+#prune by lower cp
+pruned.ct<- prune(f
+pruned.ct<- prune(deeper.ct,
+cp=deeper.ct$cptable[which.min(deeper.ct$cptable[,"xerror"]),"CP"])
+length(pruned.ct$frame$var[pruned.ct$frame$var == "<leaf>"])
+prp(pruned.ct, type = 1, extra = 1, split.font = 1, varlen = -10)
+#accuracy of pruned ct
+pruned.ct.point.pred.train <- predict(pruned.ct, trainage.df,type = "class")
+confusionMatrix(pruned.ct.point.pred.train, trainage.df$Survived)
+confusionMatrix(pruned.ct.point.pred.train, trainage.df.Survived)
+pruned.ct.point.pred.valid <- predict(pruned.ct, valid.df,type = "class")
+confusionMatrix(pruned.ct.point.pred.valid, survived.df)
+#randomforest
+library (randomForest)
+rf <- randomForest(as.factor(Survived) ~ ., data = trainage.df, ntree = 500,
+mtry = 4, nodesize = 5, importance = TRUE)
+varImpPlot(rf, type = 1)
+#accuracy
+rf.pred <- predict(rf, valid.df)
+confusionMatrix(rf.pred, survived.df)
+#boosted tree
+library(adabag)
+library(rpart)
+library(caret)
+boost <- boosting(Survived ~ ., data = trainage.df)
+boost <- boosting(as.factor(Survived) ~ ., data = trainage.df)
+boost <- boosting(Survived ~ ., data = trainage.df)
+boost <- boosting(Survived ~ ., data = trainage.df)
+boost <- boosting(Survived ~ ., data = trainage.df, control = (minsplit = 0))
+boost <- boosting(Survived ~ ., data = trainage.df, boos=TRUE control = (minsplit = 0))
+boost <- boosting(Survived ~ ., data = trainage.df, boos=TRUE, control = (minsplit = 0))
+boost <- boosting(Survived ~ ., data = trainage.df, boos=TRUE, mfinal = 10 control = (minsplit = 0))
+boost <- boosting(Survived ~ ., data = trainage.df, boos=TRUE, mfinal = 10, control = (minsplit = 0))
+boost <- boosting(Survived ~ ., data = trainage.df, boos=TRUE, mfinal = 10, control = (minsplit = 1))
+trainage.df$Survived<-as.factor(trainage.df$Survived)
+boost <- boosting(Survived ~ ., data = trainage.df)
+pred <- predict(boost, valid.df)
+confusionMatrix(pred$class, survived.df)
+str(pred$class)
+pred$class<-as.factor(pred$class)
+str(pred$class)
+confusionMatrix(pred$class, survived.df)
+default.ct.point.pred.valid <- predict(default.ct, valid.df,type = "class")
+confusionMatrix(pred$clasdefault.ct.point.pred.valid, survived.df)
+confusionMatrix(default.ct.point.pred.valid, survived.df)
